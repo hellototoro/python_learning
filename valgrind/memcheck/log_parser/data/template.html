@@ -1,0 +1,44 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>report</title>
+</head>
+
+<h1>memcheck检测报告</h1>
+    <body>
+    <h2>一、检测结果</h2>
+    <p>检测对象：{{ app_name }}</p>
+    <p>摘要： <br> {{ summary }}</p>
+    </body>
+
+<h2>二、检测详情</h2>
+    <table border="1" width = "100%" cellspacing='0' cellpadding='5'>
+    <tr>
+        <th>泄露类型</th>
+        <th>序号</th>
+        <th>所在位置</th>
+    </tr>
+
+    {% for leak_type in leak_types %}
+    <tr align='center'>
+        <tr>
+            {% if leak_type.数量 > 0 %}
+                <td  width="80" rowspan="{{ leak_type.数量 + 1 }}">{{ leak_type.类型 }}</td>
+            {% endif %}
+        </tr>
+
+        {% for item in leak_type.位置 %}
+        <tr>
+            <td width="30">{{ loop.index }}</td>
+            <td align='left'>
+                <details>
+                <summary>点击查看详情</summary>
+                {{ item }}
+                </details>
+            </td>
+        </tr>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+    <table>
+</html>

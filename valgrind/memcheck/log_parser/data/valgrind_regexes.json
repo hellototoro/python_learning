@@ -1,0 +1,14 @@
+{
+    "error_start_regexes": {
+        "memory_leak_definitely": "^==\\d+==\\s+.*are definitely lost.*$",
+        "memory_leak_indirectly": "^==\\d+==\\s+.*are indirectly lost.*$",
+        "memory_leak_possibly": "^==\\d+==\\s+.*are possibly lost.*$",
+        "memory_leak_still_reachable": "^==\\d+==\\s+.*are still reachable lost.*$"
+    },
+    "error_summary_regexes":{
+        "memory_leak_summary": "^==\\d+==\\s+.*LEAK SUMMARY.*$"
+    },
+    "error_end_regexes":{
+        "all_error_end_regex": "^==\\d+==\\s+$"
+    }
+}
