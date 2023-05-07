@@ -6,9 +6,11 @@ import psutil
 import signal
 import shutil
 import log_parser.valgrind_log_parser as valgrind_log_parser
+import log_parser.utils.html_converter as html_converter
 
 running_tab = {}
 app_log_map = {}
+current_file_path = os.path.dirname(os.path.abspath(__file__))
 
 # 查找指定目录下的所有run_list.txt
 def find_run_lists(directory, file_name = 'run_list.txt'):
@@ -21,11 +23,12 @@ def find_run_lists(directory, file_name = 'run_list.txt'):
 
 
 # 创建log文件
-def make_log_file(dir, name):
+def make_log_file(dir):
+    if os.path.exists(dir):
+        shutil.rmtree(dir)
     log_dir = os.path.join(dir, 'log')
-    if not os.path.exists(log_dir):
-        os.mkdir(log_dir)
-    return os.path.join(log_dir, name +'.log')
+    os.makedirs(log_dir)
+    return log_dir
 
 
 # 从run_list.txt里面提取shell命令
@@ -51,13 +54,16 @@ def memcheck(run_list_path):
     log_file_list = []
     already_running_list = []
     cmd_list, app_name_list = get_cmds(run_list_path)
+    log_dir = os.path.join(os.path.dirname(current_file_path), 'report/memcheck')
     file_path = os.path.dirname(os.path.abspath(run_list_path))
+    log_dir = os.path.join(log_dir, os.path.basename(file_path))
+    log_dir = make_log_file(log_dir)
     for cmd, app_name in zip(cmd_list, app_name_list):
         if not app_name == '' and app_name not in running_tab:
             running_tab[app_name] = True
             index = cmd.rindex(app_name)
             index = cmd.rfind(' ', 0, index)
-            log_file = make_log_file(file_path, app_name)
+            log_file = os.path.join(log_dir, app_name +'.log')
             valgrind = 'valgrind --log-file=' + log_file + ' --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes '
             cmd = cmd[:index+1] + valgrind + cmd[index+1:]
             app_log_map[app_name] = log_file
@@ -69,14 +75,15 @@ def memcheck(run_list_path):
         cmd += '& \n'
         subprocess.Popen(args=cmd, stderr=subprocess.STDOUT, shell=True)  # , stdout=subprocess.PIPE
         time.sleep(1)
-    return file_path, log_file_list, already_running_list
+    return log_dir, log_file_list, already_running_list
 
 
 # 解析log
 def parser_log(log_file_list_all):
     for log_file_list in log_file_list_all:
         for log_file in log_file_list:
-            file_name, file_extension = os.path.splitext(log_file)
+            index = log_file.rfind('/')
+            file_name = log_file[0:index-len('log/')] + log_file[index:len(log_file)-len('.log')]
             v = valgrind_log_parser.ValgrindLogParser(log_file, file_name + '.html')
             v.generate_html_report()
 
@@ -112,29 +119,35 @@ def main():
         for path in sys.argv[1:]:
             run_lists.append(path)
     else:
-        search_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        run_lists = find_run_lists(search_path)
+        search_path = os.path.dirname(os.path.abspath(__file__))
+        run_lists = find_run_lists(os.path.join(search_path, '../../'))
 
     log_file_list_all = []
     already_running_dic = {}
     for run_list_path in run_lists:
-        file_path, log_file_list, already_running_list = memcheck(run_list_path)
-        already_running_dic[os.path.join(file_path, 'log')] = already_running_list
+        log_dir, log_file_list, already_running_list = memcheck(run_list_path)
+        already_running_dic[log_dir] = already_running_list
         log_file_list_all.append(log_file_list)
 
     # 测试时间
-    time.sleep(30)
+    time.sleep(1)
     kill_memcheck()
 
-    for log_path, already_running_list in already_running_dic.items():
-        if not os.path.exists(log_path):
-            os.mkdir(log_path)
+    for log_dir, already_running_list in already_running_dic.items():
+        if not os.path.exists(log_dir):
+            os.mkdir(log_dir)
         log_file_list = []
         for app_name in already_running_list:
-            shutil.copy(app_log_map[app_name], log_path)
-            log_file_list.append(os.path.join(log_path, os.path.basename(app_log_map[app_name])))
+            shutil.copy(app_log_map[app_name], log_dir)
+            log_file_list.append(os.path.join(log_dir, os.path.basename(app_log_map[app_name])))
         log_file_list_all.append(log_file_list)
     parser_log(log_file_list_all)
+
+    for log_dir, already_running_list in already_running_dic.items():
+        files = sorted(os.listdir(os.path.dirname(log_dir)))
+        files.remove('log')
+        index_path = os.path.join(os.path.dirname(log_dir), 'index.html')
+        html_converter.create_index(index_path, files)
 
 if __name__ == '__main__':
     main()
