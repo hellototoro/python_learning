@@ -25,13 +25,3 @@ def dump_html_report(app_name, row_data, html_path):
                             leak_types=data)
         f.write(out)
         f.close()
-
-def create_index(index_path, html_list):
-    path = os.path.dirname(os.path.abspath(__file__))
-    env = Environment(loader=FileSystemLoader(path+'/../data'))
-    template = env.get_template('index.html')
-
-    with open(index_path, 'w+', encoding='utf-8') as f:
-        out = template.render(report_list=html_list)
-        f.write(out)
-        f.close()

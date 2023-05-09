@@ -7,11 +7,14 @@
 <h1>memcheck检测报告</h1>
     <body>
     <h2>一、检测结果</h2>
+    <font size="4">
     <p>检测对象：{{ app_name }}</p>
     <p>摘要： <br> {{ summary }}</p>
     </body>
+    </font>
 
 <h2>二、检测详情</h2>
+    <font size="4">
     <table border="1" width = "100%" cellspacing='0' cellpadding='5'>
     <tr>
         <th>泄露类型</th>
@@ -41,4 +44,5 @@
     </tr>
     {% endfor %}
     <table>
+    </font>
 </html>
