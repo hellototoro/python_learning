@@ -10,7 +10,7 @@ running_tab = {}
 app_log_map = {}
 log_path = ''
 check_type = ''
-check_map = { 'memcheck':' --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes --log-file=',
+check_map = { 'memcheck':' -v --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes --log-file=',
               'massif':' -v --tool=massif --time-unit=B --detailed-freq=1 --massif-out-file='}
              # 'massif':' --tool=massif --massif-out-file='}
 
@@ -66,6 +66,10 @@ def valcheck_internal(check_type, run_list_path, log_path):
             index = cmd.rfind(' ', 0, index)
             log_file = os.path.join(log_dir, app_name +'.log')
             valgrind = 'valgrind ' + check_map[check_type] + log_file + ' '
+            if check_type == 'memcheck':
+                ignore_file = os.path.join(file_path, 'memcheck.ignore')
+                if os.path.exists(ignore_file):
+                    valgrind += '--suppressions=' + ignore_file + ' '
             cmd = cmd[:index+1] + valgrind + cmd[index+1:]
             app_log_map[app_name] = log_file
             log_file_list.append(log_file)

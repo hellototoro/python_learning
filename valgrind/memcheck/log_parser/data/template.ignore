@@ -1,0 +1,38 @@
+{
+   ignore_name #设置一个全局唯一的名称
+   Memcheck:Leak #类型
+   match-leak-kinds: definite #可选：[definite, indirect, possible, reachable]
+   ... #通配符
+   fun:malloc # 函数名
+   ... #通配符
+   obj:/usr/lib/x86_64-linux-gnu/libX11.so.6.4.0 # 库路径
+   ... #通配符
+}
+
+举例：
+想要过滤掉下面这条log：
+==2331== 576 bytes in 2 blocks are possibly lost in loss record 167 of 191
+==2331== at 0x4841D99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==2331== by 0x40149DA: allocate_dtv (dl-tls.c:286)
+==2331== by 0x40149DA: _dl_allocate_tls (dl-tls.c:532)
+==2331== by 0x4C28322: allocate_stack (allocatestack.c:622)
+==2331== by 0x4C28322: pthread_create@@GLIBC_2.2.5 (pthread_create.c:660)
+==2331== by 0x4E360A8: std::thread::_M_start_thread(std::unique_ptr >, void (*)()) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.28)
+==2331== by 0x54375EA: std::thread::thread::*)(), iox::popo::ListenerImpl<256ul>*, void>(void (iox::popo::ListenerImpl<256ul>::*&&)(), iox::popo::ListenerImpl<256ul>*&&) (in /usr/zkos/vendor/iceoryx/lib/libiceoryx_posh.so)
+==2331== by 0x5437069: iox::popo::ListenerImpl<256ul>::ListenerImpl(iox::popo::ConditionVariableData&) (in /usr/zkos/vendor/iceoryx/lib/libiceoryx_posh.so)
+==2331== by 0x5436EE9: iox::popo::ListenerImpl<256ul>::ListenerImpl() (in /usr/zkos/vendor/iceoryx/lib/libiceoryx_posh.so)
+==2331== by 0x543666F: iox::popo::Listener::Listener() (in /usr/zkos/vendor/iceoryx/lib/libiceoryx_posh.so)
+==2331== by 0x4B6A6B6: zkos::comm::ipc::iceoryx::ServerMgr::ServerMgr(iox::cxx::string<100ul> const&, iox::cxx::string<100ul> const&, bool, unsigned int) (in /usr/zkos/modules/libraries/zkos_comm/lib/libzkos_ipc.so)
+==2331== by 0x4B7B46B: void __gnu_cxx::new_allocator::construct const&, iox::cxx::string<100ul> const&, bool, unsigned int&>(zkos::comm::ipc::iceoryx::ServerMgr*, iox::cxx::string<100ul> const&, iox::cxx::string<100ul> const&, bool&&, unsigned int&) (in /usr/zkos/modules/libraries/zkos_comm/lib/libzkos_ipc.so)
+==2331== by 0x4B7AFBF: void std::allocator_traits >::construct const&, iox::cxx::string<100ul> const&, bool, unsigned int&>(std::allocator&, zkos::comm::ipc::iceoryx::ServerMgr*, iox::cxx::string<100ul> const&, iox::cxx::string<100ul> const&, bool&&, unsigned int&) (in /usr/zkos/modules/libraries/zkos_comm/lib/libzkos_ipc.so)
+==2331== by 0x4B7A77A: std::_Sp_counted_ptr_inplace, (__gnu_cxx::_Lock_policy)2>::_Sp_counted_ptr_inplace const&, iox::cxx::string<100ul> const&, bool, unsigned int&>(std::allocator, iox::cxx::string<100ul> const&, iox::cxx::string<100ul> const&, bool&&, unsigned int&) (in /usr/zkos/modules/libraries/zkos_comm/lib/libzkos_ipc.so)
+
+可以在memcheck.ignore文件里面添加一条过滤规则：
+file : memcheck.ignore
+{
+  ingnore_iceoryx
+  Memcheck:Leak
+  ...
+  obj:/usr/zkos/vendor/iceoryx/lib/libiceoryx_posh.so
+  ...
+}

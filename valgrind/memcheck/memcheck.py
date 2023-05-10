@@ -31,7 +31,7 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)
 
     search_path = os.path.join(current_file_path, '../'*2)
-    log_path = os.path.join(search_path, '../valcheck_report/' + check_type)
+    log_path = os.path.join(search_path, 'valcheck_report/' + check_type)
     log_file_list_all, already_running_dic = comm.valcheck(search_path, log_path, check_type)
 
     parser_log(log_file_list_all)
