@@ -1,12 +1,9 @@
 import os
-import sys
 import signal
-
-import log_parser.valgrind_log_parser as valgrind_log_parser
-current_file_path = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(current_file_path, '../'))
 import comm
+import memcheck.log_parser.valgrind_log_parser as valgrind_log_parser
 
+current_file_path = os.path.dirname(os.path.abspath(__file__))
 check_type = 'memcheck'
 
 
@@ -26,7 +23,7 @@ def signal_handler(sig, frame):
     exit()
 
 
-def main():
+def memcheck():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
@@ -41,7 +38,3 @@ def main():
         files.remove('log')
         index_path = os.path.join(os.path.dirname(log_dir), 'index.html')
         comm.create_index(check_type, index_path, files)
-
-
-if __name__ == '__main__':
-    main()

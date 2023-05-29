@@ -1,7 +1,7 @@
 {
-   ignore_name #设置一个全局唯一的名称
-   Memcheck:Leak #类型
-   match-leak-kinds: definite #可选：[definite, indirect, possible, reachable]
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable #可选：[definite, indirect, possible, reachable]
    ... #通配符
    fun:malloc # 函数名
    ... #通配符

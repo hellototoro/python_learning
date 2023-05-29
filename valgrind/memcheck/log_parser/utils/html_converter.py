@@ -1,4 +1,5 @@
 import os
+import json
 from jinja2 import Environment, FileSystemLoader
 
 def data_convert(row_data):
@@ -24,4 +25,11 @@ def dump_html_report(app_name, row_data, html_path):
                             summary=summary,
                             leak_types=data)
         f.write(out)
+        f.close()
+
+
+def dump_json_report(row_data, json_path):
+    data, summary = data_convert(row_data)
+    with open(json_path, 'w+', encoding='utf-8') as f:
+        json.dump({'summary': summary, 'leak_types': data}, f, ensure_ascii=False, indent=4)
         f.close()

@@ -10,7 +10,7 @@ running_tab = {}
 app_log_map = {}
 log_path = ''
 check_type = ''
-check_map = { 'memcheck':' -v --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes --log-file=',
+check_map = { 'memcheck':' -v --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes --show-reachable=no --log-file=',
               'massif':' -v --tool=massif --time-unit=B --detailed-freq=1 --massif-out-file='}
              # 'massif':' --tool=massif --massif-out-file='}
 
@@ -56,20 +56,21 @@ def valcheck_internal(check_type, run_list_path, log_path):
     log_file_list = []
     already_running_list = []
     cmd_list, app_name_list = get_cmds(run_list_path)
+    kill_apps(app_name_list)
     file_path = os.path.dirname(os.path.abspath(run_list_path))
     log_dir = os.path.join(log_path, os.path.basename(file_path))
     log_dir = make_log_file(log_dir)
     for cmd, app_name in zip(cmd_list, app_name_list):
         if not app_name == '' and app_name not in running_tab:
             running_tab[app_name] = True
-            index = cmd.rindex(app_name)
-            index = cmd.rfind(' ', 0, index)
             log_file = os.path.join(log_dir, app_name +'.log')
             valgrind = 'valgrind ' + check_map[check_type] + log_file + ' '
             if check_type == 'memcheck':
                 ignore_file = os.path.join(file_path, 'memcheck.ignore')
                 if os.path.exists(ignore_file):
                     valgrind += '--suppressions=' + ignore_file + ' '
+            index = cmd.rindex(app_name)
+            index = cmd.rfind(' ', 0, index)
             cmd = cmd[:index+1] + valgrind + cmd[index+1:]
             app_log_map[app_name] = log_file
             log_file_list.append(log_file)
@@ -79,30 +80,33 @@ def valcheck_internal(check_type, run_list_path, log_path):
 
         cmd += '& \n'
         subprocess.Popen(args=cmd, stderr=subprocess.STDOUT, shell=True)  # , stdout=subprocess.PIPE
-        time.sleep(5)
+        time.sleep(20)
     return log_dir, log_file_list, already_running_list
 
 
-# 杀掉valgrind进程
-def kill_valcheck(check_type):
-    run_flag = True
-    while run_flag:
-        run_flag = False
-        for proc in psutil.process_iter(['name']):
-            index = str(proc.info['name']).find(check_type)
-            if index != -1:
-                try:
-                    run_flag = True
-                    subprocess.call("kill " + str(proc.pid), shell=True)
-                    time.sleep(10)
-                except subprocess.CalledProcessError as err:
-                    print(err)
+def kill_apps(app_name_list):
+    while True:
+        running_flag = False
+        for app_name in app_name_list:
+            for proc in psutil.process_iter(['name']):
+                index = str(proc.info['name']).find(app_name)
+                if index != -1:
+                    try:
+                        running_flag = True
+                        subprocess.call("kill " + str(proc.pid), shell=True)
+                    except subprocess.CalledProcessError as err:
+                        print(err)
+        if not running_flag:
+            break
+        time.sleep(10)
 
 
 def valcheck(search_path, _log_path, _check_type):
     check_type = _check_type
     log_path = _log_path
     run_lists = []
+    running_tab.clear()
+    app_log_map.clear()
     if(len(sys.argv) > 1):
         for path in sys.argv[1:]:
             run_lists.append(path)
@@ -117,8 +121,8 @@ def valcheck(search_path, _log_path, _check_type):
         log_file_list_all.append(log_file_list)
 
     # 测试时间
-    time.sleep(10)
-    kill_valcheck(check_type)
+    time.sleep(30)
+    kill_apps([check_type])
 
     for log_dir, already_running_list in already_running_dic.items():
         if not os.path.exists(log_dir):

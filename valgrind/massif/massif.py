@@ -1,11 +1,8 @@
 import os
-import sys
 import signal
-
-current_file_path = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(current_file_path, '../'))
 import comm
 
+current_file_path = os.path.dirname(os.path.abspath(__file__))
 check_type = 'massif'
 
 
@@ -33,12 +30,12 @@ def signal_handler(sig, frame):
     exit()
 
 
-def main():
+def massif():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
     search_path = os.path.join(current_file_path, '../../')
-    log_path = os.path.join(search_path, '../valcheck_report/' + check_type)
+    log_path = os.path.join(search_path, 'valcheck_report/' + check_type)
     log_file_list_all, already_running_dic = comm.valcheck(search_path, log_path, check_type)
 
     parser_log(log_file_list_all)
@@ -48,7 +45,3 @@ def main():
         files.remove('log')
         index_path = os.path.join(os.path.dirname(log_dir), 'index.html')
         comm.create_index(check_type, index_path, files)
-
-
-if __name__ == '__main__':
-    main()

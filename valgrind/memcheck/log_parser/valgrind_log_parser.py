@@ -1,12 +1,10 @@
 import re
 import os
 import argparse
-from log_parser.utils.json_helper import JsonHelper
-from log_parser.utils.html_converter import dump_html_report
-from log_parser.utils.decorators import trycatch
+from memcheck.log_parser.utils.json_helper import JsonHelper
+from memcheck.log_parser.utils.html_converter import *
 
 class ValgrindLogParser(object):
-    @trycatch
     def __init__(
         self,
         valgrind_log_file,
@@ -71,7 +69,6 @@ class ValgrindLogParser(object):
             self._end_regex = re.compile(self.regex_json.error_end_regexes.get('all_error_end_regex'), re.I)
         return self._end_regex
 
-    @trycatch
     def _parser(self):
         with open(self.valgrind_log_file, 'r') as in_file:
             append_lines_flag = False
@@ -111,6 +108,9 @@ class ValgrindLogParser(object):
         app_name = self.valgrind_log_file.split('/')[-1].split('.')[0]
         data = self.errors_dict[self.valgrind_log_file]
         dump_html_report(app_name, data, self.html_report_location)
+        base_path, ext = os.path.splitext(self.html_report_location)
+        json_path = base_path + '.json'
+        dump_json_report(data, json_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
